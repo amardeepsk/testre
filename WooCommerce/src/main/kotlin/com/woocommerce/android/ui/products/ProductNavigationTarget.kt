@@ -41,6 +41,7 @@ sealed class ProductNavigationTarget : Event() {
         val password: String?
     ) : ProductNavigationTarget()
     data class ViewProductCategories(val remoteId: Long) : ProductNavigationTarget()
+    object AddProductCategory : ProductNavigationTarget()
     data class ViewProductSlug(val slug: String) : ProductNavigationTarget()
     data class ViewProductMenuOrder(val menuOrder: Int) : ProductNavigationTarget()
     object ExitProduct : ProductNavigationTarget()
