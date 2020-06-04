@@ -19,8 +19,8 @@ import com.woocommerce.android.ui.products.BaseProductFragment
 import com.woocommerce.android.ui.products.OnLoadMoreListener
 import com.woocommerce.android.ui.products.ProductDetailViewModel
 import com.woocommerce.android.ui.products.ProductDetailViewModel.ProductExitEvent.ExitProductCategories
+import com.woocommerce.android.ui.products.categories.AddProductCategoryViewModel.ProductCategoryItemUiModel
 import com.woocommerce.android.ui.products.categories.ProductCategoriesAdapter.OnProductCategoryClickListener
-import com.woocommerce.android.ui.products.categories.ProductCategoriesAdapter.ProductCategoryViewHolderModel
 import com.woocommerce.android.util.WooAnimUtils
 import com.woocommerce.android.widgets.SkeletonView
 import com.woocommerce.android.widgets.WCEmptyView.EmptyViewType
@@ -158,20 +158,20 @@ class ProductCategoriesFragment : BaseProductFragment(), OnLoadMoreListener, OnP
         return viewModel.onBackButtonClicked(ExitProductCategories())
     }
 
-    override fun onProductCategoryClick(productCategoryViewHolderModel: ProductCategoryViewHolderModel) {
+    override fun onProductCategoryClick(productCategoryItemUiModel: ProductCategoryItemUiModel) {
         val product = requireNotNull(viewModel.getProduct().productDraft)
         val selectedCategories = product.categories.toMutableList()
 
         val found = selectedCategories.find {
-            it.id == productCategoryViewHolderModel.category.remoteCategoryId
+            it.id == productCategoryItemUiModel.category.remoteCategoryId
         }
 
         var changeRequired = false
-        if (!productCategoryViewHolderModel.isSelected && found != null) {
+        if (!productCategoryItemUiModel.isSelected && found != null) {
             selectedCategories.remove(found)
             changeRequired = true
-        } else if (productCategoryViewHolderModel.isSelected && found == null) {
-            selectedCategories.add(productCategoryViewHolderModel.category.toCategory())
+        } else if (productCategoryItemUiModel.isSelected && found == null) {
+            selectedCategories.add(productCategoryItemUiModel.category.toCategory())
             changeRequired = true
         }
 

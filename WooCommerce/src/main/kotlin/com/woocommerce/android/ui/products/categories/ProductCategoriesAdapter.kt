@@ -10,9 +10,8 @@ import androidx.constraintlayout.widget.ConstraintLayout.LayoutParams
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.woocommerce.android.R
-import com.woocommerce.android.model.ProductCategory
 import com.woocommerce.android.ui.products.OnLoadMoreListener
-import com.woocommerce.android.ui.products.ProductDetailViewModel.Companion.DEFAULT_PRODUCT_CATEGORY_MARGIN
+import com.woocommerce.android.ui.products.categories.AddProductCategoryViewModel.ProductCategoryItemUiModel
 import com.woocommerce.android.ui.products.categories.ProductCategoriesAdapter.ProductCategoryViewHolder
 import kotlinx.android.synthetic.main.product_category_list_item.view.*
 import org.wordpress.android.util.HtmlUtils
@@ -22,16 +21,10 @@ class ProductCategoriesAdapter(
     private val loadMoreListener: OnLoadMoreListener,
     private val clickListener: OnProductCategoryClickListener
 ) : RecyclerView.Adapter<ProductCategoryViewHolder>() {
-    private val productCategoryList = ArrayList<ProductCategoryViewHolderModel>()
-
-    data class ProductCategoryViewHolderModel(
-        val category: ProductCategory,
-        var margin: Int = DEFAULT_PRODUCT_CATEGORY_MARGIN,
-        var isSelected: Boolean = false
-    )
+    private val productCategoryList = ArrayList<ProductCategoryItemUiModel>()
 
     interface OnProductCategoryClickListener {
-        fun onProductCategoryClick(productCategoryViewHolderModel: ProductCategoryViewHolderModel)
+        fun onProductCategoryClick(productCategoryItemUiModel: ProductCategoryItemUiModel)
     }
 
     init {
@@ -80,13 +73,13 @@ class ProductCategoriesAdapter(
 
     private fun handleCategoryClick(
         holder: ProductCategoryViewHolder,
-        productCategory: ProductCategoryViewHolderModel
+        productCategory: ProductCategoryItemUiModel
     ) {
         productCategory.isSelected = holder.checkBox.isChecked
         clickListener.onProductCategoryClick(productCategory)
     }
 
-    fun setProductCategories(productsCategories: List<ProductCategoryViewHolderModel>) {
+    fun setProductCategories(productsCategories: List<ProductCategoryItemUiModel>) {
         if (productCategoryList.isEmpty()) {
             productCategoryList.addAll(productsCategories)
             notifyDataSetChanged()
@@ -105,8 +98,8 @@ class ProductCategoriesAdapter(
     }
 
     private class ProductCategoryItemDiffUtil(
-        val oldList: List<ProductCategoryViewHolderModel>,
-        val newList: List<ProductCategoryViewHolderModel>
+        val oldList: List<ProductCategoryItemUiModel>,
+        val newList: List<ProductCategoryItemUiModel>
     ) : DiffUtil.Callback() {
         override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int) =
             oldList[oldItemPosition].category.remoteCategoryId == newList[newItemPosition].category.remoteCategoryId
