@@ -7,16 +7,30 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Observer
 import com.woocommerce.android.R
 import com.woocommerce.android.analytics.AnalyticsTracker
 import com.woocommerce.android.extensions.takeIfNotEqualTo
-import com.woocommerce.android.ui.products.BaseProductFragment
-import com.woocommerce.android.ui.products.ProductDetailViewModel
+import com.woocommerce.android.ui.base.BaseFragment
+import com.woocommerce.android.ui.base.UIMessageResolver
+import com.woocommerce.android.viewmodel.MultiLiveEvent.Event.Exit
+import com.woocommerce.android.viewmodel.MultiLiveEvent.Event.ShowSnackbar
+import com.woocommerce.android.viewmodel.ViewModelFactory
 import com.woocommerce.android.widgets.CustomProgressDialog
 import kotlinx.android.synthetic.main.fragment_add_product_category.*
+import org.wordpress.android.util.ActivityUtils
+import javax.inject.Inject
 
-class AddProductCategoryFragment : BaseProductFragment() {
+class AddProductCategoryFragment : BaseFragment() {
     private var progressDialog: CustomProgressDialog? = null
+
+    @Inject lateinit var uiMessageResolver: UIMessageResolver
+
+    @Inject lateinit var viewModelFactory: ViewModelFactory
+    private val viewModel: AddProductCategoryViewModel by viewModels { viewModelFactory }
+
+    private var doneMenuItem: MenuItem? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -34,10 +48,16 @@ class AddProductCategoryFragment : BaseProductFragment() {
         AnalyticsTracker.trackViewShown(this)
     }
 
+    override fun onStop() {
+        super.onStop()
+        activity?.let { ActivityUtils.hideKeyboard(it) }
+    }
+
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         menu.clear()
         inflater.inflate(R.menu.menu_done, menu)
         super.onCreateOptionsMenu(menu, inflater)
+        doneMenuItem = menu.findItem(R.id.menu_done)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -61,25 +81,35 @@ class AddProductCategoryFragment : BaseProductFragment() {
         product_category_name.setOnTextChangedListener { viewModel.onCategoryNameChanged(it.toString()) }
     }
 
-    override fun onRequestAllowBackPress() = true
-
-    private fun setupObservers(viewModel: ProductDetailViewModel) {
+    private fun setupObservers(viewModel: AddProductCategoryViewModel) {
         viewModel.addProductCategoryViewStateData.observe(viewLifecycleOwner) { old, new ->
             new.categoryNameErrorMessage?.takeIfNotEqualTo(old?.categoryNameErrorMessage) {
                 displayCategoryNameError(it)
             }
             new.displayProgressDialog?.takeIfNotEqualTo(old?.displayProgressDialog) { showProgressDialog(it) }
         }
+
+        viewModel.event.observe(viewLifecycleOwner, Observer { event ->
+            when (event) {
+                is ShowSnackbar -> uiMessageResolver.showSnack(event.message)
+                is Exit -> requireActivity().onBackPressed()
+                else -> event.isHandled = false
+            }
+        })
     }
 
     private fun displayCategoryNameError(messageId: Int) {
         if (messageId != 0) {
             product_category_name.error = getString(messageId)
-            showUpdateMenuItem(false)
+            showDoneMenuItem(false)
         } else {
             product_category_name.clearError()
-            showUpdateMenuItem(true)
+            showDoneMenuItem(true)
         }
+    }
+
+    private fun showDoneMenuItem(show: Boolean) {
+        doneMenuItem?.isVisible = show
     }
 
     private fun showProgressDialog(show: Boolean) {

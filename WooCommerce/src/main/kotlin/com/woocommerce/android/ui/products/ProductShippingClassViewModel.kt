@@ -29,6 +29,11 @@ class ProductShippingClassViewModel @AssistedInject constructor(
     final val productShippingClassViewStateData = LiveDataDelegate(savedState, ProductShippingClassViewState())
     private var productShippingClassViewState by productShippingClassViewStateData
 
+    override fun onCleared() {
+        super.onCleared()
+        productRepository.onCleanup()
+    }
+
     /**
      * Load & fetch the shipping classes for the current site, optionally performing a "load more" to
      * load the next page of shipping classes
