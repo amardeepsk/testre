@@ -11,9 +11,11 @@ import com.woocommerce.android.model.ProductCategory
 import com.woocommerce.android.model.RequestResult
 import com.woocommerce.android.model.sortCategories
 import com.woocommerce.android.tools.NetworkStatus
+import com.woocommerce.android.ui.products.categories.AddProductCategoryViewModel.AddProductCategoryEvent.ExitWithResult
 import com.woocommerce.android.util.CoroutineDispatchers
 import com.woocommerce.android.util.WooLog
 import com.woocommerce.android.viewmodel.LiveDataDelegate
+import com.woocommerce.android.viewmodel.MultiLiveEvent.Event
 import com.woocommerce.android.viewmodel.MultiLiveEvent.Event.Exit
 import com.woocommerce.android.viewmodel.MultiLiveEvent.Event.ShowSnackbar
 import com.woocommerce.android.viewmodel.SavedStateWithArgs
@@ -57,10 +59,13 @@ class AddProductCategoryViewModel @AssistedInject constructor(
         addProductCategoryViewState = addProductCategoryViewState.copy(displayProgressDialog = true)
         launch {
             if (networkStatus.isConnected()) {
-                when (productCategoriesRepository.addProductCategory(categoryName, parentId)) {
+                val requestResult = productCategoriesRepository.addProductCategory(categoryName, parentId)
+                // hide progress dialog
+                addProductCategoryViewState = addProductCategoryViewState.copy(displayProgressDialog = false)
+                when (requestResult) {
                     RequestResult.SUCCESS -> {
                         triggerEvent(ShowSnackbar(string.add_product_category_success))
-                        triggerEvent(Exit)
+                        triggerEvent(ExitWithResult(ProductCategory(name = categoryName, parentId = parentId)))
                     }
                     RequestResult.API_ERROR -> {
                         addProductCategoryViewState = addProductCategoryViewState.copy(
@@ -73,11 +78,10 @@ class AddProductCategoryViewModel @AssistedInject constructor(
                     else -> { /** No action needed */ }
                 }
             } else {
+                // hide progress dialog
+                addProductCategoryViewState = addProductCategoryViewState.copy(displayProgressDialog = false)
                 triggerEvent(ShowSnackbar(string.offline_error))
             }
-
-            // hide progress dialog
-            addProductCategoryViewState = addProductCategoryViewState.copy(displayProgressDialog = false)
         }
     }
 
@@ -215,6 +219,10 @@ class AddProductCategoryViewModel @AssistedInject constructor(
             }
         }
         return sortedList.toList()
+    }
+
+    sealed class AddProductCategoryEvent(val addedCategory: ProductCategory) : Event() {
+        class ExitWithResult(addedCategory: ProductCategory) : AddProductCategoryEvent(addedCategory)
     }
 
     data class ProductCategoryItemUiModel(

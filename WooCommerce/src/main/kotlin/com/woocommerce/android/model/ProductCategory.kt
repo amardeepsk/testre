@@ -10,9 +10,9 @@ import java.util.Stack
 
 @Parcelize
 data class ProductCategory(
-    val remoteCategoryId: Long,
+    val remoteCategoryId: Long = 0L,
     val name: String,
-    val slug: String,
+    val slug: String = "",
     val parentId: Long
 ) : Parcelable {
     companion object {

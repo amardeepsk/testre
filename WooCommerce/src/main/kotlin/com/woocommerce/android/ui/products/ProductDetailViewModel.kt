@@ -179,6 +179,12 @@ class ProductDetailViewModel @AssistedInject constructor(
         triggerEvent(AddProductCategory)
     }
 
+    fun onProductCategoryAdded(category: ProductCategory) {
+        val selectedCategories = viewState.productDraft?.categories?.toMutableList() ?: mutableListOf()
+        selectedCategories.add(category.toCategory())
+        updateProductDraft(categories = selectedCategories)
+    }
+
     /**
      * Called when the Share menu button is clicked in Product detail screen
      */
@@ -1062,9 +1068,9 @@ class ProductDetailViewModel @AssistedInject constructor(
         // Mark the product categories as selected in the sorted list
         for (productCategoryViewHolderModel in sortedList) {
             for (selectedCategory in selectedCategories) {
-                if (productCategoryViewHolderModel.category.remoteCategoryId == selectedCategory.id &&
-                    productCategoryViewHolderModel.category.name == selectedCategory.name)
+                if (productCategoryViewHolderModel.category.name == selectedCategory.name) {
                     productCategoryViewHolderModel.isSelected = true
+                }
             }
         }
 
