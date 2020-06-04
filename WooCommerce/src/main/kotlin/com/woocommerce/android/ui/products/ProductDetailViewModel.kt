@@ -216,9 +216,10 @@ class ProductDetailViewModel @AssistedInject constructor(
             } else {
                 triggerEvent(ShowSnackbar(string.offline_error))
             }
+
+            // hide progress dialog
+            addProductCategoryViewState = addProductCategoryViewState.copy(displayProgressDialog = false)
         }
-        // hide progress dialog
-        addProductCategoryViewState = addProductCategoryViewState.copy(displayProgressDialog = false)
     }
 
     /**

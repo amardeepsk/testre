@@ -86,8 +86,8 @@ class AddProductCategoryFragment : BaseProductFragment() {
         if (show) {
             hideProgressDialog()
             progressDialog = CustomProgressDialog.show(
-                getString(R.string.product_update_dialog_title),
-                getString(R.string.product_update_dialog_message)
+                getString(R.string.product_add_category_dialog_title),
+                getString(R.string.product_add_category_dialog_message)
             ).also { it.show(parentFragmentManager, CustomProgressDialog.TAG) }
             progressDialog?.isCancelable = false
         } else {
