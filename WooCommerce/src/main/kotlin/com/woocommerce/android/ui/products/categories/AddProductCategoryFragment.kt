@@ -9,8 +9,10 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
+import androidx.navigation.fragment.findNavController
 import com.woocommerce.android.R
 import com.woocommerce.android.analytics.AnalyticsTracker
+import com.woocommerce.android.extensions.navigateSafely
 import com.woocommerce.android.extensions.takeIfNotEqualTo
 import com.woocommerce.android.ui.base.BaseFragment
 import com.woocommerce.android.ui.base.UIMessageResolver
@@ -79,6 +81,11 @@ class AddProductCategoryFragment : BaseFragment() {
         super.onActivityCreated(savedInstanceState)
 
         product_category_name.setOnTextChangedListener { viewModel.onCategoryNameChanged(it.toString()) }
+        product_category_parent.setClickListener {
+            val action = AddProductCategoryFragmentDirections
+                .actionAddProductCategoryFragmentToParentCategoryListFragment()
+            findNavController().navigateSafely(action)
+        }
     }
 
     private fun setupObservers(viewModel: AddProductCategoryViewModel) {
