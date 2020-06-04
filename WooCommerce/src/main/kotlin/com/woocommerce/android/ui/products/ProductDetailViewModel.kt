@@ -23,6 +23,7 @@ import com.woocommerce.android.media.ProductImagesService.Companion.OnProductIma
 import com.woocommerce.android.media.ProductImagesServiceWrapper
 import com.woocommerce.android.model.Product
 import com.woocommerce.android.model.ProductCategory
+import com.woocommerce.android.model.RequestResult
 import com.woocommerce.android.model.TaxClass
 import com.woocommerce.android.model.toAppModel
 import com.woocommerce.android.tools.NetworkStatus
@@ -133,6 +134,10 @@ class ProductDetailViewModel @AssistedInject constructor(
     final val productCategoriesViewStateData = LiveDataDelegate(savedState, ProductCategoriesViewState())
     private var productCategoriesViewState by productCategoriesViewStateData
 
+    // view state for the add category screen
+    final val addProductCategoryViewStateData = LiveDataDelegate(savedState, AddProductCategoryViewState())
+    private var addProductCategoryViewState by addProductCategoryViewStateData
+
     private val _productCategories = MutableLiveData<List<ProductCategory>>()
     val productCategories: LiveData<List<ProductCategory>> = _productCategories
 
@@ -179,6 +184,41 @@ class ProductDetailViewModel @AssistedInject constructor(
 
     fun onAddCategoryButtonClicked() {
         triggerEvent(AddProductCategory)
+    }
+
+    fun onCategoryNameChanged(categoryName: String) {
+        addProductCategoryViewState = if (categoryName.isEmpty()) {
+            addProductCategoryViewState.copy(categoryNameErrorMessage = string.add_product_category_empty)
+        } else {
+            addProductCategoryViewState.copy(categoryNameErrorMessage = 0)
+        }
+    }
+
+    fun addProductCategory(categoryName: String, parentId: Long = 0L) {
+        addProductCategoryViewState = addProductCategoryViewState.copy(displayProgressDialog = true)
+        launch {
+            if (networkStatus.isConnected()) {
+                when (productCategoriesRepository.addProductCategory(categoryName, parentId)) {
+                    RequestResult.SUCCESS -> {
+                        triggerEvent(ShowSnackbar(string.add_product_category_success))
+                        triggerEvent(Exit)
+                    }
+                    RequestResult.API_ERROR -> {
+                        addProductCategoryViewState = addProductCategoryViewState.copy(
+                            categoryNameErrorMessage = string.add_product_category_duplicate
+                        )
+                    }
+                    RequestResult.ERROR -> {
+                        triggerEvent(ShowSnackbar(string.add_product_category_failed))
+                    }
+                    else -> { /** No action needed */ }
+                }
+            } else {
+                triggerEvent(ShowSnackbar(string.offline_error))
+            }
+        }
+        // hide progress dialog
+        addProductCategoryViewState = addProductCategoryViewState.copy(displayProgressDialog = false)
     }
 
     /**
@@ -1303,6 +1343,12 @@ class ProductDetailViewModel @AssistedInject constructor(
         val isAddCategoryButtonVisible: Boolean
             get() = isSkeletonShown == false
     }
+
+    @Parcelize
+    data class AddProductCategoryViewState(
+        val displayProgressDialog: Boolean? = null,
+        val categoryNameErrorMessage: Int? = null
+    ) : Parcelable
 
     @AssistedInject.Factory
     interface Factory : ViewModelAssistedFactory<ProductDetailViewModel>
