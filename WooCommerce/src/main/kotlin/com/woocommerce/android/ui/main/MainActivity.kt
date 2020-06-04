@@ -354,7 +354,8 @@ class MainActivity : AppUpgradeActivity(),
                 R.id.issueRefundFragment,
                 R.id.addOrderShipmentTrackingFragment,
                 R.id.addOrderNoteFragment,
-                R.id.productSettingsFragment -> {
+                R.id.productSettingsFragment,
+                R.id.addProductCategoryFragment -> {
                     true
                 }
                 R.id.productDetailFragment -> {
