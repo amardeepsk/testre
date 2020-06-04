@@ -355,7 +355,8 @@ class MainActivity : AppUpgradeActivity(),
                 R.id.addOrderShipmentTrackingFragment,
                 R.id.addOrderNoteFragment,
                 R.id.productSettingsFragment,
-                R.id.addProductCategoryFragment -> {
+                R.id.addProductCategoryFragment,
+                R.id.parentCategoryListFragment -> {
                     true
                 }
                 R.id.productDetailFragment -> {

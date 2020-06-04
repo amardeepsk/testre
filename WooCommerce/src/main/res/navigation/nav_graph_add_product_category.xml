@@ -19,5 +19,9 @@
         android:id="@+id/parentCategoryListFragment"
         android:name="com.woocommerce.android.ui.products.categories.ParentCategoryListFragment"
         tools:layout="@layout/fragment_product_categories_list">
+        <argument
+            android:name="selectedParentId"
+            android:defaultValue="0L"
+            app:argType="long" />
     </fragment>
 </navigation>

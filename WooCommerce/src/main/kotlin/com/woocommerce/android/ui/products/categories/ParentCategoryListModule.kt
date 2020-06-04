@@ -25,7 +25,7 @@ abstract class ParentCategoryListModule {
         @JvmStatic
         @Provides
         fun provideSavedStateRegistryOwner(fragment: ParentCategoryListFragment): SavedStateRegistryOwner {
-            return fragment.findNavController().getBackStackEntry(R.id.nav_graph_products)
+            return fragment.findNavController().getBackStackEntry(R.id.nav_graph_add_product_category)
         }
     }
 

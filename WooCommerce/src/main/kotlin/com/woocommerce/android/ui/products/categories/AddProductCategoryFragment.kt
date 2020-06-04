@@ -7,9 +7,9 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.navGraphViewModels
 import com.woocommerce.android.R
 import com.woocommerce.android.analytics.AnalyticsTracker
 import com.woocommerce.android.extensions.navigateSafely
@@ -30,7 +30,8 @@ class AddProductCategoryFragment : BaseFragment() {
     @Inject lateinit var uiMessageResolver: UIMessageResolver
 
     @Inject lateinit var viewModelFactory: ViewModelFactory
-    private val viewModel: AddProductCategoryViewModel by viewModels { viewModelFactory }
+    private val viewModel: AddProductCategoryViewModel
+        by navGraphViewModels(R.id.nav_graph_add_product_category) { viewModelFactory }
 
     private var doneMenuItem: MenuItem? = null
 
@@ -81,10 +82,16 @@ class AddProductCategoryFragment : BaseFragment() {
         super.onActivityCreated(savedInstanceState)
 
         product_category_name.setOnTextChangedListener { viewModel.onCategoryNameChanged(it.toString()) }
-        product_category_parent.setClickListener {
-            val action = AddProductCategoryFragmentDirections
-                .actionAddProductCategoryFragmentToParentCategoryListFragment()
-            findNavController().navigateSafely(action)
+
+        with(product_category_parent) {
+            viewModel.getSelectedParentCategoryName()?.let { post { setText(it) } }
+            setClickListener {
+                val action = AddProductCategoryFragmentDirections
+                    .actionAddProductCategoryFragmentToParentCategoryListFragment(
+                        viewModel.getSelectedParentId()
+                    )
+                findNavController().navigateSafely(action)
+            }
         }
     }
 

@@ -23,10 +23,6 @@ class ProductCategoriesAdapter(
 ) : RecyclerView.Adapter<ProductCategoryViewHolder>() {
     private val productCategoryList = ArrayList<ProductCategoryItemUiModel>()
 
-    interface OnProductCategoryClickListener {
-        fun onProductCategoryClick(productCategoryItemUiModel: ProductCategoryItemUiModel)
-    }
-
     init {
         setHasStableIds(true)
     }
