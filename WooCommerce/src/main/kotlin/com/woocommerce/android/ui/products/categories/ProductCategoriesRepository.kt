@@ -83,6 +83,10 @@ class ProductCategoriesRepository @Inject constructor(
     fun getProductCategoryByRemoteId(remoteId: Long) =
         productStore.getProductCategoryByRemoteId(selectedSite.get(), remoteId)
 
+    fun getProductCategoryByNameAndParentId(categoryName: String, parentId: Long): ProductCategory? =
+        productStore.getProductCategoryByNameAndParentId(selectedSite.get(), categoryName, parentId)
+            ?.toAppProductCategoryModel()
+
     /**
      * Fires the request to add a new product category
      *

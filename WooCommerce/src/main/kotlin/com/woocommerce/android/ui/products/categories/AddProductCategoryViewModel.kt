@@ -63,7 +63,9 @@ class AddProductCategoryViewModel @AssistedInject constructor(
                 when (requestResult) {
                     RequestResult.SUCCESS -> {
                         triggerEvent(ShowSnackbar(string.add_product_category_success))
-                        triggerEvent(ExitWithResult(ProductCategory(name = categoryName, parentId = parentId)))
+                        val addedCategory = productCategoriesRepository
+                            .getProductCategoryByNameAndParentId(categoryName, parentId)
+                        triggerEvent(ExitWithResult(addedCategory))
                     }
                     RequestResult.API_ERROR -> {
                         addProductCategoryViewState = addProductCategoryViewState.copy(
@@ -191,8 +193,8 @@ class AddProductCategoryViewModel @AssistedInject constructor(
         )
     }
 
-    sealed class AddProductCategoryEvent(val addedCategory: ProductCategory) : Event() {
-        class ExitWithResult(addedCategory: ProductCategory) : AddProductCategoryEvent(addedCategory)
+    sealed class AddProductCategoryEvent(val addedCategory: ProductCategory?) : Event() {
+        class ExitWithResult(addedCategory: ProductCategory?) : AddProductCategoryEvent(addedCategory)
     }
 
     data class ProductCategoryItemUiModel(

@@ -183,6 +183,7 @@ class ProductDetailViewModel @AssistedInject constructor(
         val selectedCategories = viewState.productDraft?.categories?.toMutableList() ?: mutableListOf()
         selectedCategories.add(category.toCategory())
         updateProductDraft(categories = selectedCategories)
+        refreshProductCategories()
     }
 
     /**
@@ -1066,7 +1067,7 @@ class ProductDetailViewModel @AssistedInject constructor(
         val sortedList = productCategories.sortCategories()
 
         // Mark the product categories as selected in the sorted list
-        for (productCategoryViewHolderModel in sortedList) {
+        sortedList.map { productCategoryViewHolderModel ->
             for (selectedCategory in selectedCategories) {
                 if (productCategoryViewHolderModel.category.name == selectedCategory.name) {
                     productCategoryViewHolderModel.isSelected = true
