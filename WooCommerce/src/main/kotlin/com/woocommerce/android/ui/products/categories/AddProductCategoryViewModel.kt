@@ -1,5 +1,6 @@
 package com.woocommerce.android.ui.products.categories
 
+import android.content.DialogInterface
 import android.os.Parcelable
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -17,6 +18,7 @@ import com.woocommerce.android.util.WooLog
 import com.woocommerce.android.viewmodel.LiveDataDelegate
 import com.woocommerce.android.viewmodel.MultiLiveEvent.Event
 import com.woocommerce.android.viewmodel.MultiLiveEvent.Event.Exit
+import com.woocommerce.android.viewmodel.MultiLiveEvent.Event.ShowDiscardDialog
 import com.woocommerce.android.viewmodel.MultiLiveEvent.Event.ShowSnackbar
 import com.woocommerce.android.viewmodel.SavedStateWithArgs
 import com.woocommerce.android.viewmodel.ScopedViewModel
@@ -43,6 +45,22 @@ class AddProductCategoryViewModel @AssistedInject constructor(
     override fun onCleared() {
         super.onCleared()
         productCategoriesRepository.onCleanup()
+    }
+
+    fun onBackButtonClicked(categoryName: String, parentId: String): Boolean {
+        val hasChanges = categoryName.isNotEmpty() || parentId.isNotEmpty()
+        return if (hasChanges && addProductCategoryViewState.shouldShowDiscardDialog) {
+            triggerEvent(ShowDiscardDialog(
+                positiveBtnAction = DialogInterface.OnClickListener { _, _ ->
+                    addProductCategoryViewState = addProductCategoryViewState.copy(shouldShowDiscardDialog = false)
+                    triggerEvent(Exit)
+                },
+                negativeBtnAction = DialogInterface.OnClickListener { _, _ ->
+                    addProductCategoryViewState = addProductCategoryViewState.copy(shouldShowDiscardDialog = true)
+                }
+            ))
+            false
+        } else true
     }
 
     fun onCategoryNameChanged(categoryName: String) {
@@ -214,7 +232,8 @@ class AddProductCategoryViewModel @AssistedInject constructor(
     data class AddProductCategoryViewState(
         val displayProgressDialog: Boolean? = null,
         val categoryNameErrorMessage: Int? = null,
-        val selectedParentId: Long? = null
+        val selectedParentId: Long? = null,
+        val shouldShowDiscardDialog: Boolean = true
     ) : Parcelable
 
     @Parcelize

@@ -18,9 +18,12 @@ import com.woocommerce.android.extensions.navigateSafely
 import com.woocommerce.android.extensions.takeIfNotEqualTo
 import com.woocommerce.android.ui.base.BaseFragment
 import com.woocommerce.android.ui.base.UIMessageResolver
+import com.woocommerce.android.ui.dialog.CustomDiscardDialog
+import com.woocommerce.android.ui.main.MainActivity.Companion.BackPressListener
 import com.woocommerce.android.ui.products.categories.AddProductCategoryViewModel.AddProductCategoryEvent.ExitWithResult
 
 import com.woocommerce.android.viewmodel.MultiLiveEvent.Event.Exit
+import com.woocommerce.android.viewmodel.MultiLiveEvent.Event.ShowDiscardDialog
 import com.woocommerce.android.viewmodel.MultiLiveEvent.Event.ShowSnackbar
 import com.woocommerce.android.viewmodel.ViewModelFactory
 import com.woocommerce.android.widgets.CustomProgressDialog
@@ -28,7 +31,7 @@ import kotlinx.android.synthetic.main.fragment_add_product_category.*
 import org.wordpress.android.util.ActivityUtils
 import javax.inject.Inject
 
-class AddProductCategoryFragment : BaseFragment() {
+class AddProductCategoryFragment : BaseFragment(), BackPressListener {
     companion object {
         const val ARG_ADDED_CATEGORY = "arg-added-category"
     }
@@ -107,6 +110,10 @@ class AddProductCategoryFragment : BaseFragment() {
         }
     }
 
+    override fun onRequestAllowBackPress(): Boolean {
+        return viewModel.onBackButtonClicked(getCategoryName(), product_category_parent.getText())
+    }
+
     private fun setupObservers(viewModel: AddProductCategoryViewModel) {
         viewModel.addProductCategoryViewStateData.observe(viewLifecycleOwner) { old, new ->
             new.categoryNameErrorMessage?.takeIfNotEqualTo(old?.categoryNameErrorMessage) {
@@ -129,6 +136,12 @@ class AddProductCategoryFragment : BaseFragment() {
                         R.id.productCategoriesFragment
                     )
                 }
+                is ShowDiscardDialog -> CustomDiscardDialog.showDiscardDialog(
+                    requireActivity(),
+                    event.positiveBtnAction,
+                    event.negativeBtnAction,
+                    event.messageId
+                )
                 else -> event.isHandled = false
             }
         })
