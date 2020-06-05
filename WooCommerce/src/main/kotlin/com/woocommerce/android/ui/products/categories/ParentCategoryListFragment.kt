@@ -106,7 +106,7 @@ class ParentCategoryListFragment : BaseFragment(), OnLoadMoreListener, OnProduct
         viewModel.event.observe(viewLifecycleOwner, Observer { event ->
             when (event) {
                 is ShowSnackbar -> uiMessageResolver.showSnack(event.message)
-                is Exit -> findNavController().navigateUp()
+                is Exit -> requireActivity().onBackPressed()
                 else -> event.isHandled = false
             }
         })

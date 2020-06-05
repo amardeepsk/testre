@@ -54,6 +54,13 @@ class AddProductCategoryViewModel @AssistedInject constructor(
     }
 
     fun addProductCategory(categoryName: String, parentId: Long = getSelectedParentId()) {
+        if (categoryName.isEmpty()) {
+            addProductCategoryViewState = addProductCategoryViewState.copy(
+                categoryNameErrorMessage = string.add_product_category_empty
+            )
+            return
+        }
+
         addProductCategoryViewState = addProductCategoryViewState.copy(displayProgressDialog = true)
         launch {
             if (networkStatus.isConnected()) {

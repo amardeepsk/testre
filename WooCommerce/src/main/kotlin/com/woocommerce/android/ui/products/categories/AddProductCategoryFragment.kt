@@ -89,7 +89,11 @@ class AddProductCategoryFragment : BaseFragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        product_category_name.setOnTextChangedListener { viewModel.onCategoryNameChanged(it.toString()) }
+        product_category_name.setOnTextChangedListener {
+            if (product_category_name.hasFocus()) {
+                viewModel.onCategoryNameChanged(it.toString())
+            }
+        }
 
         with(product_category_parent) {
             viewModel.getSelectedParentCategoryName()?.let { post { setText(it) } }
