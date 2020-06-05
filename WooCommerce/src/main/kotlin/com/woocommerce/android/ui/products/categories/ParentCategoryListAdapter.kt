@@ -4,8 +4,7 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.RadioButton
-import android.widget.TextView
+import android.widget.CheckedTextView
 import androidx.constraintlayout.widget.ConstraintLayout.LayoutParams
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -14,14 +13,20 @@ import com.woocommerce.android.ui.products.OnLoadMoreListener
 import com.woocommerce.android.ui.products.categories.AddProductCategoryViewModel.ProductCategoryItemUiModel
 import com.woocommerce.android.ui.products.categories.ParentCategoryListAdapter.ParentCategoryListViewHolder
 import kotlinx.android.synthetic.main.parent_category_list_item.view.*
-import org.wordpress.android.util.HtmlUtils
 
 class ParentCategoryListAdapter(
     private val context: Context,
+    private var selectedCategoryId: Long,
     private val loadMoreListener: OnLoadMoreListener,
     private val clickListener: OnProductCategoryClickListener
 ) : RecyclerView.Adapter<ParentCategoryListViewHolder>() {
-    private val parentCategoryList = ArrayList<ProductCategoryItemUiModel>()
+    var parentCategoryList: List<ProductCategoryItemUiModel> = ArrayList()
+        set(value) {
+            if (!isSameList(value)) {
+                field = value
+                notifyDataSetChanged()
+            }
+        }
 
     init {
         setHasStableIds(true)
@@ -40,26 +45,13 @@ class ParentCategoryListAdapter(
         val parentCategory = parentCategoryList[position]
 
         holder.apply {
-            txtCategoryName.text = if (parentCategory.category.name.isEmpty()) {
-                context.getString(R.string.untitled)
-            } else {
-                HtmlUtils.fastStripHtml(parentCategory.category.name)
-            }
+            txtCategoryName.text = parentCategory.category.name
 
             val newLayoutParams = txtCategoryName.layoutParams as LayoutParams
             newLayoutParams.marginStart = parentCategory.margin
             txtCategoryName.layoutParams = newLayoutParams
 
-            radioButton.isChecked = parentCategory.isSelected
-
-            radioButton.setOnClickListener {
-                handleCategoryClick(this, parentCategory)
-            }
-
-            itemView.setOnClickListener {
-                radioButton.isChecked = !radioButton.isChecked
-                handleCategoryClick(this, parentCategory)
-            }
+            txtCategoryName.isChecked = selectedCategoryId == parentCategory.category.remoteCategoryId
         }
 
         if (position == itemCount - 1) {
@@ -67,30 +59,44 @@ class ParentCategoryListAdapter(
         }
     }
 
-    private fun handleCategoryClick(
-        holder: ParentCategoryListViewHolder,
-        parentCategory: ProductCategoryItemUiModel
-    ) {
-        parentCategory.isSelected = holder.radioButton.isChecked
-        clickListener.onProductCategoryClick(parentCategory)
-    }
+    private fun getParentCategoryAtPosition(position: Int) = parentCategoryList[position]
 
-    fun setParentCategories(productsCategories: List<ProductCategoryItemUiModel>) {
-        if (parentCategoryList.isEmpty()) {
-            parentCategoryList.addAll(productsCategories)
-            notifyDataSetChanged()
-        } else {
-            val diffResult =
-                DiffUtil.calculateDiff(ParentCategoryItemDiffUtil(parentCategoryList, productsCategories))
-            parentCategoryList.clear()
-            parentCategoryList.addAll(productsCategories)
-            diffResult.dispatchUpdatesTo(this)
+    private fun isSameList(categories: List<ProductCategoryItemUiModel>): Boolean {
+        if (categories.size != parentCategoryList.size) {
+            return false
         }
+
+        categories.forEach {
+            if (!containsParentCategory(it)) {
+                return false
+            }
+        }
+
+        return true
     }
 
-    class ParentCategoryListViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val txtCategoryName: TextView = view.parentCategoryName
-        val radioButton: RadioButton = view.parentCategorySelected
+    private fun containsParentCategory(parentCategory: ProductCategoryItemUiModel): Boolean {
+        parentCategoryList.forEach {
+            if (it.category.remoteCategoryId == parentCategory.category.remoteCategoryId) {
+                return true
+            }
+        }
+        return false
+    }
+
+    inner class ParentCategoryListViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val txtCategoryName: CheckedTextView = view.parentCategoryName
+        init {
+            itemView.setOnClickListener {
+                val position = adapterPosition
+                if (position > -1) {
+                    getParentCategoryAtPosition(position).let {
+                        selectedCategoryId = it.category.remoteCategoryId
+                        clickListener.onProductCategoryClick(it)
+                    }
+                }
+            }
+        }
     }
 
     private class ParentCategoryItemDiffUtil(
@@ -107,7 +113,7 @@ class ParentCategoryListAdapter(
         override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
             val oldItem = oldList[oldItemPosition]
             val newItem = newList[newItemPosition]
-            return oldItem.category.isSameCategory(newItem.category)
+            return oldItem.category.remoteCategoryId == newItem.category.remoteCategoryId
         }
     }
 }

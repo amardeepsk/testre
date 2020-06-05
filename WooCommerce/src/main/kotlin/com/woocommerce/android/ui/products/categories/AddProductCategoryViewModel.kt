@@ -29,8 +29,6 @@ class AddProductCategoryViewModel @AssistedInject constructor(
     private val productCategoriesRepository: ProductCategoriesRepository,
     private val networkStatus: NetworkStatus
 ) : ScopedViewModel(savedState, dispatchers) {
-    private val arguments: ParentCategoryListFragmentArgs by savedState.navArgs()
-
     // view state for the add category screen
     val addProductCategoryViewStateData = LiveDataDelegate(savedState, AddProductCategoryViewState())
     private var addProductCategoryViewState by addProductCategoryViewStateData
@@ -86,9 +84,9 @@ class AddProductCategoryViewModel @AssistedInject constructor(
     }
 
     fun fetchParentCategories() {
-        if (_parentCategories.value == null) {
+//        if (_parentCategories.value == null) {
             loadParentCategories()
-        }
+//        }
     }
 
     fun onParentCategorySelected(parentId: Long) {
@@ -143,10 +141,8 @@ class AddProductCategoryViewModel @AssistedInject constructor(
                 if (productsInDb.isEmpty()) {
                     showSkeleton = true
                 } else {
-                    _parentCategories.value = sortAndStyleParentCategories(
-                        arguments.selectedParentId, productsInDb
-                    )
-                    showSkeleton = parentCategoryListViewState.isRefreshing == false
+                    _parentCategories.value = productsInDb.sortCategories()
+                    showSkeleton = false
                 }
             }
             parentCategoryListViewState = parentCategoryListViewState.copy(
@@ -175,10 +171,9 @@ class AddProductCategoryViewModel @AssistedInject constructor(
      */
     private suspend fun fetchParentCategories(loadMore: Boolean = false) {
         if (networkStatus.isConnected()) {
-            _parentCategories.value = sortAndStyleParentCategories(
-                arguments.selectedParentId,
-                productCategoriesRepository.fetchProductCategories(loadMore = loadMore)
-            )
+            _parentCategories.value = productCategoriesRepository
+                .fetchProductCategories(loadMore = loadMore)
+                .sortCategories()
 
             parentCategoryListViewState = parentCategoryListViewState.copy(
                 isLoading = true,
@@ -194,31 +189,6 @@ class AddProductCategoryViewModel @AssistedInject constructor(
             isLoadingMore = false,
             isRefreshing = false
         )
-    }
-
-    /**
-     * The method takes in a list of product categories and calculates the order and grouping of categories
-     * by their parent ids. This creates a stable sorted list of categories by name. The returned list also
-     * has margin data, which can be used to visually represent categories in a hierarchy under their
-     * parent ids.
-     *
-     * @param parentCategories the list of parent categories to sort and style
-     * @return [List<ProductCategoryItemUiModel>] the sorted styled list of categories
-     */
-    private fun sortAndStyleParentCategories(
-        selectedParentId: Long,
-        parentCategories: List<ProductCategory>
-    ): List<ProductCategoryItemUiModel> {
-        // Sort all incoming categories by their parent
-        val sortedList = parentCategories.sortCategories()
-
-        // Mark the parent category as selected in the sorted list
-        for (productCategoryItemUiModel in sortedList) {
-            if (productCategoryItemUiModel.category.remoteCategoryId == selectedParentId) {
-                productCategoryItemUiModel.isSelected = true
-            }
-        }
-        return sortedList.toList()
     }
 
     sealed class AddProductCategoryEvent(val addedCategory: ProductCategory) : Event() {

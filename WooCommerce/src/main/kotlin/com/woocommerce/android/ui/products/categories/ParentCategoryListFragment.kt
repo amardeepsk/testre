@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.Observer
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.navGraphViewModels
 import com.woocommerce.android.R
 import com.woocommerce.android.analytics.AnalyticsTracker
@@ -65,7 +66,9 @@ class ParentCategoryListFragment : BaseFragment(), OnLoadMoreListener, OnProduct
 
         val activity = requireActivity()
 
-        parentCategoryListAdapter = ParentCategoryListAdapter(activity.baseContext, this, this)
+        parentCategoryListAdapter = ParentCategoryListAdapter(
+            activity.baseContext, viewModel.getSelectedParentId(), this, this
+        )
         with(productCategoriesRecycler) {
             layoutManager = androidx.recyclerview.widget.LinearLayoutManager(activity)
             adapter = parentCategoryListAdapter
@@ -103,14 +106,14 @@ class ParentCategoryListFragment : BaseFragment(), OnLoadMoreListener, OnProduct
         viewModel.event.observe(viewLifecycleOwner, Observer { event ->
             when (event) {
                 is ShowSnackbar -> uiMessageResolver.showSnack(event.message)
-                is Exit -> requireActivity().onBackPressed()
+                is Exit -> findNavController().navigateUp()
                 else -> event.isHandled = false
             }
         })
     }
 
     private fun showParentCategories(productCategories: List<ProductCategoryItemUiModel>) {
-        parentCategoryListAdapter.setParentCategories(productCategories)
+        parentCategoryListAdapter.parentCategoryList = productCategories
     }
 
     private fun showSkeleton(show: Boolean) {

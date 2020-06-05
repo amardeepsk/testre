@@ -60,7 +60,7 @@ data class ProductCategory(
  *
  * @return [Set<ProductCategoryItemUiModel>] a sorted set of view holder models containing category view data
  */
-fun List<ProductCategory>.sortByNameAndParent(): Set<ProductCategoryItemUiModel> {
+private fun List<ProductCategory>.sortByNameAndParent(): Set<ProductCategoryItemUiModel> {
     val sortedList = mutableSetOf<ProductCategoryItemUiModel>()
     val stack = Stack<ProductCategory>()
     val visited = mutableSetOf<Long>()
@@ -97,8 +97,6 @@ fun List<ProductCategory>.sortByNameAndParent(): Set<ProductCategoryItemUiModel>
  * has margin data, which can be used to visually represent categories in a hierarchy under their
  * parent ids.
  *
- * @param product the product for which the categories are being styled
- * @param productCategories the list of product categories to sort and style
  * @return [List<ProductCategoryItemUiModel>] the sorted styled list of categories
  */
 fun List<ProductCategory>.sortCategories(): List<ProductCategoryItemUiModel> {

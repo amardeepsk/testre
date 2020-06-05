@@ -13,6 +13,10 @@
             app:destination="@id/parentCategoryListFragment"
             app:enterAnim="@anim/activity_fade_in"
             app:popExitAnim="@anim/activity_fade_out">
+            <argument
+                android:name="selectedParentId"
+                android:defaultValue="0L"
+                app:argType="long" />
         </action>
     </fragment>
     <fragment
