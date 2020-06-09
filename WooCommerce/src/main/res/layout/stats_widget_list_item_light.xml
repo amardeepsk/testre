@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:minHeight="@dimen/stats_widget_list_item_min_height"
+    android:paddingStart="@dimen/major_100"
+    android:paddingEnd="@dimen/major_100">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/list_item_title"
+        style="@style/Woo.Card.Body"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/minor_100"
+        android:ellipsize="end"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="@string/dashboard_stats_visitors" />
+
+    <TextView
+        android:id="@+id/list_item_value"
+        style="@style/Woo.Card.ListItem.Title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/list_item_title"
+        tools:text="20,345" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

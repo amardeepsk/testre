@@ -106,4 +106,12 @@ so that's the baseline as defined in `major_100`.
     <dimen name="appbar_elevation">4dp</dimen>
     <dimen name="alert_dialog_max_width">300dp</dimen>
     <dimen name="top_earner_min_height">224dp</dimen>
+
+    <!-- Stats Widget -->
+    <dimen name="stats_widget_icon_height">30dp</dimen>
+    <dimen name="stats_widget_header_height">60dp</dimen>
+    <dimen name="stats_widget_list_item_min_height">60dp</dimen>
+    <dimen name="stats_widget_content_height">108dp</dimen>
+    <dimen name="stats_widget_min_width">250dp</dimen>
+    <dimen name="stats_widget_min_height">150dp</dimen>
 </resources>
