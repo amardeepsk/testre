@@ -41,4 +41,12 @@ object PreferenceUtils {
     fun setBoolean(preferences: SharedPreferences, key: String, value: Boolean) {
         preferences.edit().putBoolean(key, value).apply()
     }
+
+    fun getLong(preferences: SharedPreferences, key: String, default: Long = 0L): Long {
+        return preferences.getLong(key, default)
+    }
+
+    fun setLong(preferences: SharedPreferences, key: String, value: Long) {
+        preferences.edit().putLong(key, value).apply()
+    }
 }

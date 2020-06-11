@@ -71,6 +71,14 @@
             android:label="@string/support_help"
             android:theme="@style/Theme.Woo.DayNight" />
 
+        <activity
+            android:name=".ui.widgets.stats.TodayWidgetConfigurationActivity"
+            android:theme="@style/Theme.Woo.DayNight">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
         <activity android:name="zendesk.support.guide.HelpCenterActivity"
             android:theme="@style/Theme.Woo.DayNight.Zendesk" />
 
@@ -136,6 +144,17 @@
         <service
             android:name=".ui.widgets.WidgetService"
             android:permission="android.permission.BIND_REMOTEVIEWS" />
+
+        <receiver
+            android:name=".ui.widgets.stats.TodayStatsWidget"
+            android:label="@string/today">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/stats_today_widget_info"/>
+        </receiver>
     </application>
 
 </manifest>

@@ -5,6 +5,11 @@ import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService.RemoteViewsFactory
+import com.woocommerce.android.R
+import com.woocommerce.android.WooCommerce
+import com.woocommerce.android.extensions.getColorMode
+import com.woocommerce.android.ui.widgets.stats.StatsWidget.Companion.SITE_ID_KEY
+import com.woocommerce.android.ui.widgets.stats.TodayWidgetConfigureViewModel.WidgetColorMode
 import javax.inject.Inject
 
 /**
@@ -12,10 +17,18 @@ import javax.inject.Inject
  */
 class TodayWidgetListProvider(val context: Context, intent: Intent) : RemoteViewsFactory {
     @Inject lateinit var viewModel: TodayWidgetListViewModel
+    @Inject lateinit var widgetUpdater: TodayWidgetUpdater
+
+    private val colorMode: WidgetColorMode = intent.getColorMode()
+    private val siteId: Int = intent.getIntExtra(SITE_ID_KEY, 0)
     private val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
 
+    init {
+        (context.applicationContext as WooCommerce).component.inject(this)
+    }
+
     override fun onCreate() {
-        viewModel.start(appWidgetId)
+        viewModel.start(siteId, colorMode, appWidgetId)
     }
 
     /**
@@ -32,8 +45,11 @@ class TodayWidgetListProvider(val context: Context, intent: Intent) : RemoteView
      * will show up in lieu of the actual contents in the interim
      * */
     override fun onDataSetChanged() {
-        viewModel.onDataSetChanged { appWidgetId, errorId ->
-            // TODO: update widget errors in a different commit
+        viewModel.onDataSetChanged { appWidgetId  ->
+            widgetUpdater.updateAppWidget(
+                context,
+                appWidgetId = appWidgetId
+            )
         }
     }
 
@@ -58,7 +74,12 @@ class TodayWidgetListProvider(val context: Context, intent: Intent) : RemoteView
         val uiModel = viewModel.data[position]
         val rv = RemoteViews(context.packageName, uiModel.layout)
 
-        // TODO: Add logic to update the widget UI in a different commit
+        rv.setTextViewText(R.id.list_item_title, uiModel.key)
+        rv.setTextViewText(R.id.list_item_value, uiModel.value)
+
+        val intent = Intent()
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        rv.setOnClickFillInIntent(R.id.container, intent)
         return rv
     }
 }

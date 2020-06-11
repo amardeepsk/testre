@@ -7,9 +7,9 @@ import com.nhaarman.mockitokotlin2.spy
 import com.nhaarman.mockitokotlin2.whenever
 import com.woocommerce.android.AppPrefsWrapper
 import com.woocommerce.android.R
-import com.woocommerce.android.tools.SelectedSite
-import com.woocommerce.android.ui.widgets.stats.TodayWidgetListItem
+import com.woocommerce.android.ui.widgets.stats.TodayWidgetConfigureViewModel.WidgetColorMode.LIGHT
 import com.woocommerce.android.ui.widgets.stats.TodayWidgetListViewModel
+import com.woocommerce.android.ui.widgets.stats.TodayWidgetListViewModel.TodayWidgetListItem
 import com.woocommerce.android.ui.widgets.stats.TodayWidgetListViewRepository
 import com.woocommerce.android.util.CurrencyFormatter
 import com.woocommerce.android.viewmodel.BaseUnitTest
@@ -19,16 +19,20 @@ import org.junit.Before
 import org.junit.Test
 import org.wordpress.android.fluxc.model.SiteModel
 import org.wordpress.android.fluxc.model.WCRevenueStatsModel
+import org.wordpress.android.fluxc.store.SiteStore
 import org.wordpress.android.fluxc.store.WCStatsStore.StatsGranularity
 
 class TodayWidgetListViewModelTest : BaseUnitTest() {
     private val resourceProvider: ResourceProvider = mock()
     private val currencyFormatter: CurrencyFormatter = mock()
     private val appPrefsWrapper: AppPrefsWrapper = mock()
-    private val selectedSite: SelectedSite = mock()
+    private val siteStore: SiteStore = mock()
     private val widgetRepository: TodayWidgetListViewRepository = mock()
 
-    private val siteModel = SiteModel().apply { siteId = 1 }
+    private val siteModel = SiteModel().apply {
+        id = 1
+        siteId = 1
+    }
     private val currencyCode = "$"
     private val appWidgetId: Int = 1
 
@@ -38,19 +42,19 @@ class TodayWidgetListViewModelTest : BaseUnitTest() {
     fun setup() {
         viewModel = spy(
             TodayWidgetListViewModel(
+                siteStore,
                 resourceProvider,
                 currencyFormatter,
-                selectedSite,
                 widgetRepository,
                 appPrefsWrapper
             )
         )
-        doReturn(siteModel).whenever(selectedSite).get()
-        doReturn(currencyCode).whenever(widgetRepository).getStatsCurrency()
+        doReturn(siteModel).whenever(siteStore).getSiteByLocalId(siteModel.id)
+        doReturn(currencyCode).whenever(widgetRepository).getStatsCurrency(any())
         doReturn(true).whenever(widgetRepository).userIsLoggedIn()
         doReturn(true).whenever(appPrefsWrapper).isUsingV4Api
 
-        viewModel.start(appWidgetId)
+        viewModel.start(appWidgetId, LIGHT, siteModel.id)
     }
 
     @Test
@@ -66,7 +70,7 @@ class TodayWidgetListViewModelTest : BaseUnitTest() {
         whenever(resourceProvider.getString(R.string.dashboard_stats_revenue)).thenReturn(revenueKey)
         whenever(resourceProvider.getString(R.string.dashboard_stats_orders)).thenReturn(ordersKey)
         whenever(resourceProvider.getString(R.string.dashboard_stats_visitors)).thenReturn(visitorsKey)
-        whenever(widgetRepository.getTodayRevenueStats()).thenReturn(
+        whenever(widgetRepository.getTodayRevenueStats(any())).thenReturn(
             WCRevenueStatsModel().apply {
                 this.localSiteId = siteModel.id
                 this.interval = StatsGranularity.DAYS.toString()
@@ -74,10 +78,10 @@ class TodayWidgetListViewModelTest : BaseUnitTest() {
             }
         )
 
-        whenever(widgetRepository.getTodayVisitorStats()).thenReturn(visitors.toString())
+        whenever(widgetRepository.getTodayVisitorStats(any())).thenReturn(visitors.toString())
         whenever(currencyFormatter.formatCurrencyRounded(any(), any())).thenReturn(revenueWithCurrency)
 
-        viewModel.onDataSetChanged { _, _ -> }
+        viewModel.onDataSetChanged { }
 
         // verify if the widget data size is 3. The current day stats widget should include;
         // revenue, order count, visitor count in that order
@@ -92,11 +96,9 @@ class TodayWidgetListViewModelTest : BaseUnitTest() {
         whenever(widgetRepository.userIsLoggedIn()).thenReturn(false)
 
         var onError: Int? = null
-        var onErrorId: Int? = null
-        viewModel.onDataSetChanged { appWidgetId, errorId -> onError = appWidgetId; onErrorId = errorId }
+        viewModel.onDataSetChanged { appWidgetId  -> onError = appWidgetId }
 
         assertThat(onError).isEqualTo(appWidgetId)
-        assertThat(onErrorId).isEqualTo(R.string.stats_widget_log_in_message)
     }
 
     @Test
@@ -105,10 +107,9 @@ class TodayWidgetListViewModelTest : BaseUnitTest() {
 
         var onError: Int? = null
         var onErrorId: Int? = null
-        viewModel.onDataSetChanged { appWidgetId, errorId -> onError = appWidgetId; onErrorId = errorId }
+        viewModel.onDataSetChanged { appWidgetId -> onError = appWidgetId }
 
         assertThat(onError).isEqualTo(appWidgetId)
-        assertThat(onErrorId).isEqualTo(R.string.stats_widget_availability_message)
     }
 
     private fun assertListItem(listItem: TodayWidgetListItem, key: String, value: String) {

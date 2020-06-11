@@ -22,6 +22,7 @@
         android:layout_height="wrap_content"
         android:cursorVisible="false"
         android:focusable="false"
+        android:ellipsize="end"
         android:focusableInTouchMode="false"
         android:importantForAutofill="no"
         tools:ignore="UnusedAttribute" />

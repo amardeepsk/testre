@@ -7,7 +7,6 @@ import com.woocommerce.android.model.RequestResult.ERROR
 import com.woocommerce.android.model.RequestResult.NO_ACTION_NEEDED
 import com.woocommerce.android.model.RequestResult.RETRY
 import com.woocommerce.android.model.RequestResult.SUCCESS
-import com.woocommerce.android.tools.SelectedSite
 import com.woocommerce.android.util.WooLog
 import com.woocommerce.android.util.WooLog.T.DASHBOARD
 import com.woocommerce.android.util.suspendCoroutineWithTimeout
@@ -21,6 +20,7 @@ import org.wordpress.android.fluxc.action.WCStatsAction.FETCH_NEW_VISITOR_STATS
 import org.wordpress.android.fluxc.action.WCStatsAction.FETCH_REVENUE_STATS
 import org.wordpress.android.fluxc.generated.WCStatsActionBuilder
 import org.wordpress.android.fluxc.model.SiteModel
+import org.wordpress.android.fluxc.model.WCRevenueStatsModel
 import org.wordpress.android.fluxc.store.AccountStore
 import org.wordpress.android.fluxc.store.WCStatsStore
 import org.wordpress.android.fluxc.store.WCStatsStore.FetchNewVisitorStatsPayload
@@ -38,7 +38,6 @@ import kotlin.coroutines.resume
 @OpenClassOnDebug
 class TodayWidgetListViewRepository @Inject constructor(
     private val dispatcher: Dispatcher,
-    private val selectedSite: SelectedSite, // the site the user is currently logged into
     private val accountStore: AccountStore, // required to verify if user is logged in
     private val statsStore: WCStatsStore,   // required to fetch stats data
     private val wooCommerceStore: WooCommerceStore // required to fetch site currency settings
@@ -48,23 +47,6 @@ class TodayWidgetListViewRepository @Inject constructor(
     }
 
     private var isFetchingData: Boolean = false
-
-    /**
-     * Given a [SiteModel] with the current day's date in format yyyy-MM-dd,
-     * loads a formatted date that accounts for the site's timezone setting,
-     * in the format yyy-MM-ddThh:mm:ss with the time always set to the START of the current day
-     */
-    private val startDate: String by lazy {
-        DateUtils.getStartDateForSite(selectedSite.get(), DateUtils.getStartOfCurrentDay())
-    }
-
-    /**
-     * Given a [SiteModel], loads a formatted date that accounts for the site's timezone setting,
-     * in the format yyy-MM-ddThh:mm:ss with the time always set to the END of the current day
-     */
-    private val endDate: String by lazy {
-        DateUtils.getEndDateForSite(selectedSite.get())
-    }
 
     private var continuationFetchTodayRevenue: Continuation<Boolean>? = null
     private var continuationFetchTodayVisitors: Continuation<Boolean>? = null
@@ -87,7 +69,7 @@ class TodayWidgetListViewRepository @Inject constructor(
      *
      * @return the result of the action as a [RequestResult]
      */
-    suspend fun fetchTodayStats(): RequestResult {
+    suspend fun fetchTodayStats(site: SiteModel): RequestResult {
         return if (!isFetchingData) {
             isFetchingData = true
 
@@ -99,10 +81,10 @@ class TodayWidgetListViewRepository @Inject constructor(
                     var fetchedVisitorStats = false
 
                     val fetchRevenueStats = async {
-                        fetchedRevenueStats = fetchRevenueStats()
+                        fetchedRevenueStats = fetchRevenueStats(site)
                     }
                     val fetchVisitorStats = async {
-                        fetchedVisitorStats = fetchVisitorStats()
+                        fetchedVisitorStats = fetchVisitorStats(site)
                     }
                     fetchRevenueStats.await()
                     fetchVisitorStats.await()
@@ -118,12 +100,12 @@ class TodayWidgetListViewRepository @Inject constructor(
      *
      * @return the result of the action as a [Boolean]
      */
-    private suspend fun fetchRevenueStats(): Boolean {
+    private suspend fun fetchRevenueStats(site: SiteModel): Boolean {
         return try {
             suspendCoroutineWithTimeout<Boolean>(ACTION_TIMEOUT) {
                 continuationFetchTodayRevenue = it
 
-                val visitsPayload = FetchNewVisitorStatsPayload(selectedSite.get(), StatsGranularity.DAYS, true)
+                val visitsPayload = FetchNewVisitorStatsPayload(site, StatsGranularity.DAYS, true)
                 dispatcher.dispatch(WCStatsActionBuilder.newFetchNewVisitorStatsAction(visitsPayload))
             } ?: false // request timed out
         } catch (e: CancellationException) {
@@ -137,12 +119,12 @@ class TodayWidgetListViewRepository @Inject constructor(
      *
      * @return the result of the action as a [Boolean]
      */
-    private suspend fun fetchVisitorStats(): Boolean {
+    private suspend fun fetchVisitorStats(site: SiteModel): Boolean {
         return try {
             suspendCoroutineWithTimeout<Boolean>(ACTION_TIMEOUT) {
                 continuationFetchTodayVisitors = it
 
-                val statsPayload = FetchRevenueStatsPayload(selectedSite.get(), StatsGranularity.DAYS, forced = true)
+                val statsPayload = FetchRevenueStatsPayload(site, StatsGranularity.DAYS, forced = true)
                 dispatcher.dispatch(WCStatsActionBuilder.newFetchRevenueStatsAction(statsPayload))
             } ?: false // request timed out
         } catch (e: CancellationException) {
@@ -151,19 +133,29 @@ class TodayWidgetListViewRepository @Inject constructor(
         }
     }
 
-    fun getTodayRevenueStats() = statsStore.getRawRevenueStats(
-        selectedSite.get(), StatsGranularity.DAYS, startDate, endDate
-    )
+    fun getTodayRevenueStats(site: SiteModel): WCRevenueStatsModel? {
+        // loads a formatted date that accounts for the site's timezone setting,
+        // in the format yyy-MM-ddThh:mm:ss with the time always set to the START of the current day
+        val startDate = DateUtils.getStartDateForSite(site, DateUtils.getStartOfCurrentDay())
 
-    fun getTodayVisitorStats(): String {
-        val date = DateUtils.getDateTimeForSite(selectedSite.get(), "yyyy-MM-dd", DateUtils.getStartOfCurrentDay())
+        // Loads a formatted date that accounts for the site's timezone setting,
+        // in the format yyy-MM-ddThh:mm:ss with the time always set to the END of the current day
+        val endDate = DateUtils.getEndDateForSite(site)
+
+        return statsStore.getRawRevenueStats(
+            site, StatsGranularity.DAYS, startDate, endDate
+        )
+    }
+
+    fun getTodayVisitorStats(site: SiteModel): String {
+        val date = DateUtils.getDateTimeForSite(site, "yyyy-MM-dd", DateUtils.getStartOfCurrentDay())
         val visitorStats = statsStore.getNewVisitorStats(
-            selectedSite.get(), StatsGranularity.DAYS, "1", date, false
+            site, StatsGranularity.DAYS, "1", date, true
         )
         return visitorStats.values.sum().toString()
     }
 
-    fun getStatsCurrency() = wooCommerceStore.getSiteSettings(selectedSite.get())?.currencyCode
+    fun getStatsCurrency(site: SiteModel) = wooCommerceStore.getSiteSettings(site)?.currencyCode
 
     @Suppress("unused")
     @Subscribe(threadMode = ThreadMode.MAIN)
